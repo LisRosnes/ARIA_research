@@ -397,7 +397,7 @@ def create_visualizations(df, results_df, output_dir='univariate_plots'):
 
 if __name__ == "__main__":
     # Change this to your actual file name
-    csv_file = "output_features.csv"
+    csv_file = "output_features_2.csv"
     
     print("="*80)
     print("FEATURE SUMMARY")

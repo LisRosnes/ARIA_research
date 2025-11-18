@@ -123,24 +123,61 @@ def parse_report(text: str) -> dict:
         lec_raw = "prior to first dose"
     out["Lecanemab dose"] = lec_raw
 
-    # Acute hemorrhage
-    out["acute hemmorage"] = _first(
+    # Acute hemorrhage - normalize to yes/no/none
+    acute_hem_raw = _first(
         t,
         [r"Acute/?subacute hemorrhage:\s*([^\n\.]+)", r"\bacute hemorrhage:\s*([^\n\.]+)"],
         default="",
-    ).lower() or ("none" if re.search(r"acute[/\s]?subacute hemorrhage:\s*none", t, re.I) else "")
+    ).lower()
+    if not acute_hem_raw:
+        acute_hem_raw = "none" if re.search(r"acute[/\s]?subacute hemorrhage:\s*none", t, re.I) else ""
+    # Normalize: check for explicit negatives first, then assume descriptive = present
+    if acute_hem_raw:
+        # "none definite" or "none" alone = no finding
+        if re.search(r'^none\b|^no\b|^absent|^negative', acute_hem_raw.strip()):
+            out["acute hemmorage"] = "none"
+        # "see below" or similar = keep as unclear
+        elif re.search(r'see below|see above|please see', acute_hem_raw):
+            out["acute hemmorage"] = ""
+        # Any other descriptive text = finding present
+        else:
+            out["acute hemmorage"] = "yes"
+    else:
+        out["acute hemmorage"] = ""
 
-    # Acute/subacute cortical infarct > 1.5 cm
-    out["Acute/subacute cortical infarct"] = _first(
+    # Acute/subacute cortical infarct - normalize to yes/no/none
+    infarct_raw = _first(
         t,
         r"Acute/?subacute cortical infarct[^:]*:\s*([^\n\.]+)",
         default="",
     ).lower()
+    if infarct_raw:
+        if re.search(r'^none\b|^no\b|^absent|^negative', infarct_raw.strip()):
+            out["Acute/subacute cortical infarct"] = "none"
+        elif re.search(r'see below|see above|please see', infarct_raw):
+            out["Acute/subacute cortical infarct"] = ""
+        else:
+            out["Acute/subacute cortical infarct"] = "yes"
+    else:
+        out["Acute/subacute cortical infarct"] = ""
 
-    # Chronic hemorrhage
-    out["Chronic hemorrhage"] = _first(
+    # Chronic hemorrhage - normalize to yes/no/none
+    chronic_hem_raw = _first(
         t, r"Chronic hemorrhage:\s*([^\n\.]+)", default=""
     ).lower()
+    if chronic_hem_raw:
+        # Check for negatives including "none definite"
+        if re.search(r'^none\b|^no\b|^absent|^negative', chronic_hem_raw.strip()):
+            out["Chronic hemorrhage"] = "none"
+        elif re.search(r'see below|see above|please see', chronic_hem_raw):
+            out["Chronic hemorrhage"] = ""
+        # Common patterns that indicate presence
+        elif re.search(r'microhemorrhage|hemorrhage|susceptibility|punctate|focus|foci', chronic_hem_raw):
+            out["Chronic hemorrhage"] = "yes"
+        else:
+            out["Chronic hemorrhage"] = ""
+    else:
+        out["Chronic hemorrhage"] = ""
 
     # Chronic ischemic changes -> yes/no from narrative
     chronic_isch = _first(
