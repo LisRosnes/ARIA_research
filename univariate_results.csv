@@ -1,0 +1,21 @@
+outcome,feature,n,test,p_value,note,significant
+ARIA-E,Chronic ischemic changes,318,Fisher's exact,0.0012084987089010515,,True
+ARIA-H,ERiCA-right,349,Mann-Whitney U,0.005548149282796607,,True
+ARIA-H,ERiCA-left,349,Mann-Whitney U,0.010853508113341681,,True
+ARIA-E,ERiCA-left,349,Mann-Whitney U,0.032353804774844896,,True
+ARIA-H,Lecanemab dose,298,Mann-Whitney U,0.037974653846617974,,True
+ARIA-E,Apoe,250,Fisher's exact,0.08441342830623472,,False
+ARIA-H,MTA-left,348,Mann-Whitney U,0.18632447268591357,,False
+ARIA-E,MTA-left,348,Mann-Whitney U,0.24974963990844723,,False
+ARIA-E,MTA-right,348,Mann-Whitney U,0.4018754670007286,,False
+ARIA-H,MTA-right,348,Mann-Whitney U,0.42005152277142177,,False
+ARIA-E,Lecanemab dose,298,Mann-Whitney U,0.4615370360526614,,False
+ARIA-E,ERiCA-right,349,Mann-Whitney U,0.49837361014887704,,False
+ARIA-E,Chronic hemorrhage,162,Chi-square,1.0,,False
+ARIA-E,acute hemmorage,296,Chi-square,1.0,,False
+ARIA-H,Apoe,250,Chi-square,1.0,,False
+ARIA-H,acute hemmorage,296,Chi-square,1.0,,False
+ARIA-H,Acute/subacute cortical infarct,301,Chi-square,1.0,,False
+ARIA-H,Chronic hemorrhage,162,Chi-square,1.0,,False
+ARIA-H,Chronic ischemic changes,318,Chi-square,1.0,,False
+ARIA-E,Acute/subacute cortical infarct,301,Chi-square,1.0,,False

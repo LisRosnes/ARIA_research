@@ -18,32 +18,21 @@ import argparse
 COLUMNS = [
     "Apoe",
     "Lecanemab dose",
+    "acute hemmorage",
+    "Acute/subacute cortical infarct",
+    "Chronic hemorrhage",
     "Chronic ischemic changes",
     "MTA-right",
     "MTA-left",
     "ERiCA-right",
     "ERiCA-left",
+    "Extra-axial Collection",
     "Ventricular System",
+    "Major Intracranial Flow Voids",
+    "Included Orbits",
+    "Paranasal Sinuses",
+    "Typanomastoid Cavaties",
 ]
-
-# COLUMNS = [
-#     "Apoe",
-#     "Lecanemab dose",
-#     "acute hemmorage",
-#     "Acute/subacute cortical infarct",
-#     "Chronic hemorrhage",
-#     "Chronic ischemic changes",
-#     "MTA-right",
-#     "MTA-left",
-#     "ERiCA-right",
-#     "ERiCA-left",
-#     "Extra-axial Collection",
-#     "Ventricular System",
-#     "Major Intracranial Flow Voids",
-#     "Included Orbits",
-#     "Paranasal Sinuses",
-#     "Typanomastoid Cavaties",
-# ]
 
 # Pass-through columns that live in the source sheet but are not inside the
 # report text column. These will be copied verbatim into the output CSV.
@@ -51,7 +40,23 @@ COLUMNS += ["ARIA-E", "ARIA-H"]
 
 # --------- helpers ---------
 def _clean(s: str) -> str:
+    """Clean whitespace and normalize the string."""
     return re.sub(r"\s+", " ", s.strip())
+
+def _sanitize_value(s: str) -> str:
+    """
+    Additional cleaning to remove problematic characters that might cause CSV issues.
+    Removes leading/trailing quotes and normalizes internal quotes.
+    """
+    if not s:
+        return s
+    # Remove leading/trailing whitespace
+    s = s.strip()
+    # Remove leading/trailing quotes that might interfere with CSV quoting
+    s = s.strip('"').strip("'")
+    # Replace any remaining double quotes with single quotes to avoid CSV confusion
+    s = s.replace('"', "'")
+    return s
 
 def _first(text: str, patterns, default=""):
     if isinstance(patterns, str):
@@ -60,7 +65,7 @@ def _first(text: str, patterns, default=""):
         m = re.search(pat, text, flags=re.I | re.S)
         if m:
             g = next((g for g in m.groups() if g is not None), m.group(0))
-            return _clean(g)
+            return _sanitize_value(_clean(g))
     return default
 
 def _present_to_yes_no(value: str, default=""):
@@ -200,11 +205,15 @@ def parse_report(text: str) -> dict:
         default=""
     ).lower() or "normal" if re.search(r"Tympanomastoid.*normal", t, re.I) else ""
 
+    # Final sanitization pass on all values
+    for key in out:
+        out[key] = _sanitize_value(out[key])
+
     return out
 
 def write_csv_row(path, rowdict, header=COLUMNS):
     with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=header)
+        w = csv.DictWriter(f, fieldnames=header, quoting=csv.QUOTE_ALL)
         w.writeheader()
         w.writerow({k: rowdict.get(k, "") for k in header})
 
@@ -236,16 +245,16 @@ def main():
                 row = parse_report(text)
                 # copy ARIA columns from the source row (handle pandas NA)
                 try:
-                    row["ARIA-E"] = "" if pd.isna(r.get("ARIA-E")) else str(r.get("ARIA-E"))
+                    row["ARIA-E"] = _sanitize_value("" if pd.isna(r.get("ARIA-E")) else str(r.get("ARIA-E")))
                 except Exception:
                     row["ARIA-E"] = ""
                 try:
-                    row["ARIA-H"] = "" if pd.isna(r.get("ARIA-H")) else str(r.get("ARIA-H"))
+                    row["ARIA-H"] = _sanitize_value("" if pd.isna(r.get("ARIA-H")) else str(r.get("ARIA-H")))
                 except Exception:
                     row["ARIA-H"] = ""
                 out_rows.append(row)
         with open(args.out, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=COLUMNS)
+            w = csv.DictWriter(f, fieldnames=COLUMNS, quoting=csv.QUOTE_ALL)
             w.writeheader()
             for row in out_rows:
                 w.writerow(row)
