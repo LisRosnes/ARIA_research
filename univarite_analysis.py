@@ -354,7 +354,7 @@ def create_visualizations(df, results_df, output_dir='univariate_plots'):
             axes[0].legend(title=outcome_label, labels=['No', 'Yes'])
             axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=0)
         
-        axes[0].set_xlabel(f'{outcome_label}', fontsize=12)
+        axes[0].set_xlabel(f'{feature_name}', fontsize=12)
         axes[0].set_title(f'{feature_name} vs {outcome_label}\n(p = {p_value:.4f})', 
                          fontsize=14, fontweight='bold')
         axes[0].grid(axis='y', alpha=0.3)
