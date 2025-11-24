@@ -6,6 +6,7 @@ This repository provides tools to extract structured features from MRI radiology
 
 - `feature_extraction.py` — Parse free-text MRI reports into a standardized CSV of clinical and imaging features.
 - `univariate_analysis.py` — Run univariate statistical tests and produce summary tables and visualizations.
+- `subject_mapping.py` — Aggregate subject-level ARIA status and event dates across longitudinal studies; produces `aria_mapping_output.csv`.
 - `merged_stats_full_tp.csv`, `output_features_2.csv` — example/derived data files (if present).
 - `univariate_results.csv` — generated results summary (output of `univariate_analysis.py`).
 - `univariate_plots/` — folder where generated PNG plots are saved.
@@ -57,6 +58,19 @@ Key behaviors:
 
 Typical output: a CSV with one row per report and columns for extracted features (genetics, treatment, acute/chronic findings, structural grades, ARIA flags).
 
+## `subject_mapping.py` (summary)
+
+Purpose: Aggregate subject-level ARIA status and derive event dates across longitudinal imaging studies.
+
+Key behaviors:
+- Reads an Excel input of imaging results and metadata (expects columns like `SubjectID`, `Study Date`, `ARIA-E`, `ARIA-H`).
+- Converts `Study Date` to datetime and sorts records by `SubjectID` and date to ensure chronological processing.
+- Normalizes `ARIA-E` and `ARIA-H` indicators to binary values (1 for "Yes", 0 otherwise).
+- For each subject, finds the first date an ARIA flag appears and the date it is resolved (first subsequent `0` after a `1`), marking unresolved events as "Not Resolved".
+- Outputs a subject-level CSV (`aria_mapping_output.csv`) listing per-subject ARIA presence and event dates and prints a preview to the console.
+
+Dependencies: `pandas` (for reading Excel, datetime handling, grouping and CSV output).
+
 ## `univariate_analysis.py` (summary)
 
 Purpose: standardize the extracted features, choose appropriate univariate statistical tests, and produce a results table and visualizations.
@@ -89,13 +103,3 @@ conda install pandas openpyxl numpy scipy matplotlib seaborn -c conda-forge
 - `features.csv` (or your chosen output filename) — feature table produced by `feature_extraction.py`.
 - `univariate_results.csv` — summary of statistical tests and p-values.
 - `univariate_plots/` — directory with PNG plots for significant features.
-
-## Notes and Recommendations
-
-- Creating a fresh conda environment for Python 3.11 is recommended to avoid dependency conflicts.
-- After upgrading Python, run a quick smoke test of both scripts with a small sample to confirm packages and I/O behavior.
-- If you rely on Excel input, ensure `openpyxl` is installed and your sheet/column names match the arguments.
-
-## Contact
-
-If you have questions or want enhancements (e.g., CLI flags for `univariate_analysis.py`), open an issue or reach out to the repository owner.
