@@ -1,15 +1,19 @@
  # ARIA_research
 
-This repository provides tools to extract structured features from MRI radiology reports and run univariate analyses to find associations with ARIA adverse events (ARIA-E and ARIA-H).
+This repository provides tools to extract structured features from MRI radiology reports and run univariate and multivariate analyses to find associations with ARIA adverse events (ARIA-E and ARIA-H).
 
 ## Contents
 
 - `feature_extraction.py` — Parse free-text MRI reports into a standardized CSV of clinical and imaging features.
 - `univariate_analysis.py` — Run univariate statistical tests and produce summary tables and visualizations.
+- `multivariate_analysis.py` —  Elastic Net logistic regression pipeline for ARIA prediction using FreeSurfer brain MRI features.
 - `subject_mapping.py` — Aggregate subject-level ARIA status and event dates across longitudinal studies; produces `aria_mapping_output.csv`.
-- `merged_stats_full_tp.csv`, `output_features_2.csv` — example/derived data files (if present).
+- `merged_stats_full_tp.csv` — FreeSurfer volumetric and cortical thickness measurements for all subjects.
+- `aria_mapping_output.csv` — Subject-level ARIA outcomes (ARIA-E and ARIA-H status).
+- `output_features_2.csv` — example/derived data files (if present).
 - `univariate_results.csv` — generated results summary (output of `univariate_analysis.py`).
 - `univariate_plots/` — folder where generated PNG plots are saved.
+- `multivariate_plots/` — folder for multivariate analysis visualizations (ROC curves, PR curves, feature importance).
 
 ## Quick Start
 
@@ -22,8 +26,7 @@ conda activate aria_py311
 
 2. Install required Python packages:
 
-```bash
-pip install pandas openpyxl numpy scipy matplotlib seaborn
+```bashpip install pandas openpyxl numpy scipy matplotlib seaborn scikit-learn
 ```
 
 3. Extract features from reports (examples):
@@ -44,6 +47,14 @@ python feature_extraction.py --xlsx reports.xlsx --sheet Sheet1 --column Report 
 ```bash
 python univariate_analysis.py
 # (Edit the csv input path in the script's __main__ or provide arguments if implemented)
+```
+
+5. Run multivariate analysis (Elastic Net):
+
+```bash
+python multivariate_analysis.py
+# Automatically analyzes both ARIA-E and ARIA-H outcomes
+# Generates feature importance CSVs and visualization plots
 ```
 
 ## `feature_extraction.py` (summary)
@@ -84,13 +95,41 @@ Key behaviors:
 ## Dependencies
 
 - Python 3.8+ (Python 3.11 recommended).
-- Required packages: `pandas`, `openpyxl` (for Excel input), `numpy`, `scipy`, `matplotlib`, `seaborn`.
+- Required packages: `pandas`, `openpyxl` (for Excel input), `numpy`, `scipy`, `matplotlib`, `seaborn`, `scikit-learn` (for multivariate analysis).
 
 Install with pip:
 
 ```bash
-pip install pandas openpyxl numpy scipy matplotlib seaborn
+pip install pandas openpyxl numpy scipy matplotlib seaborn scikit-learn
 ```
+
+## `multivariate_analysis.py` (summary)
+
+**NEW**: Purpose: Build predictive models for ARIA-E and ARIA-H outcomes using elastic net logistic regression with FreeSurfer brain MRI features.
+
+Key behaviors:
+- **Data Integration**: Merges FreeSurfer volumetric/cortical measurements with ARIA outcome data.
+- **Feature Preparation**: Handles missing data, removes zero-variance features, and applies standardization.
+- **Sample Size Aware**: Automatically adapts analysis strategy based on number of events:
+  - <10 events: Descriptive analysis only (univariate associations)
+  - 10-14 events: Simple modeling without cross-validation
+  - ≥15 events: Full elastic net with cross-validated hyperparameter tuning
+- **Model Training**: Elastic net logistic regression with:
+  - Balanced class weights to handle imbalanced outcomes
+  - Grid search over regularization strength (C) and elastic net mixing (l1_ratio)
+  - Stratified k-fold cross-validation when sufficient events
+- **Feature Selection**: L1/L2 regularization automatically selects relevant features and sets others to zero
+- **Outputs**:
+  - Feature importance CSVs showing non-zero coefficients
+  - Univariate association CSVs with Mann-Whitney U test results
+  - Visualization plots (ROC curves, PR curves, feature importance, confusion matrices) in `multivariate_plots/`
+- **Performance Metrics**: AUROC, AUPRC, classification reports, confusion matrices
+
+Current data status (as of run):
+- ARIA-E: 2 events (insufficient for modeling - descriptive analysis only)
+- ARIA-H: 0 events (no cases - cannot perform analysis)
+
+The pipeline will automatically perform full modeling when sufficient events are accumulated.
 
 Or with conda:
 
